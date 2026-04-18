@@ -705,10 +705,14 @@ const tr=document.getElementById('ticker');
     const row=document.createElement('div');row.className='p-row';
     row.innerHTML=`<div class="p-dot" style="background:${col}"></div><div class="p-info"><div class="p-title serif">${p.title}</div><div class="p-author mono">${p.author}</div></div><div class="p-tag" style="color:${col};border-color:${col}33;background:${col}11;">${p.tag}</div>`;
     row.addEventListener('click',()=>{
-      const n=nodes[p.id];
-      hoveredNode=n;showTooltip(n,n.x,n.y);
-      n.x=W/2+(Math.random()-.5)*60; n.y=H/2+(Math.random()-.5)*60;
-    });
+  if(p.url && p.url !== '#') {
+    window.open(p.url, '_blank');
+  } else {
+    const n=nodes[p.id];
+    hoveredNode=n;showTooltip(n,n.x,n.y);
+    n.x=W/2+(Math.random()-.5)*60; n.y=H/2+(Math.random()-.5)*60;
+  }
+});
     list.appendChild(row);
   });
 })();
