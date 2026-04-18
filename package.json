@@ -1,0 +1,14 @@
+{
+  "name": "personal-page",
+  "version": "1.0.0",
+  "description": "Personal page for Rakshith Gowda",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static HTML site - no build needed'",
+    "start": "npx serve ."
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  }
+}
