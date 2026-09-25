@@ -372,6 +372,24 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:
 
     <p style="margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);">Live via Strava</p>
 </section>
+  <!-- ── LETTERBOXD ── -->
+<section class="rv" id="films" style="padding:5rem 0;">
+  <div style="display:flex;align-items:baseline;gap:.8rem;margin-bottom:2rem;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--gold);letter-spacing:.18em;opacity:.7;">02 /</span>
+    <h2 style="font-family:'Instrument Serif',serif;font-size:2rem;font-weight:400;letter-spacing:-.02em;">Recently Watched</h2>
+    <div style="flex:1;height:1px;background:var(--border2);margin-left:.4rem;"></div>
+  </div>
+
+  <div style="position:relative;">
+    <div id="film-strip" style="display:flex;gap:.9rem;overflow-x:auto;padding:.2rem .4rem .6rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">
+      <p style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;">Loading recent films…</p>
+    </div>
+    <div style="position:absolute;top:0;bottom:.6rem;left:0;width:36px;background:linear-gradient(90deg,var(--navy),transparent);pointer-events:none;"></div>
+    <div style="position:absolute;top:0;bottom:.6rem;right:0;width:36px;background:linear-gradient(270deg,var(--navy),transparent);pointer-events:none;"></div>
+  </div>
+
+  <p style="margin-top:.8rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);">Live via Letterboxd</p>
+</section>
 
   <!-- ── OBSIDIAN GRAPH ── -->
   <section class="graph-section rv" id="reads">
@@ -893,6 +911,42 @@ const tr=document.getElementById('ticker');
     requestAnimationFrame(frame);
   }
   frame();
+})();
+</script>
+  <script>
+(function(){
+  const LB_USER = 'soapnspices'; // ← your Letterboxd username
+  const RSS_URL = 'https://letterboxd.com/' + LB_USER + '/rss/';
+  const PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL);
+
+  fetch(PROXY).then(r => r.json()).then(data => {
+    const strip = document.getElementById('film-strip');
+    strip.innerHTML = '';
+    if (!data.items || !data.items.length) {
+      strip.innerHTML = '<p style="font-family:\'JetBrains Mono\',monospace;font-size:.6rem;color:var(--faint);">No recent films found.</p>';
+      return;
+    }
+    data.items.slice(0, 10).forEach(item => {
+      const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
+      const poster = imgMatch ? imgMatch[1] : '';
+      const [filmName, rating] = item.title.split(' - ');
+
+      const card = document.createElement('a');
+      card.href = item.link; card.target = '_blank'; card.rel = 'noopener';
+      card.style.cssText = 'flex:0 0 auto;width:110px;text-decoration:none;scroll-snap-align:start;';
+      card.innerHTML = `
+        <div style="width:110px;height:163px;border-radius:6px;overflow:hidden;border:1px solid var(--border2);background:var(--navy3);">
+          ${poster ? `<img src="${poster}" alt="${filmName}" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
+        </div>
+        <div style="margin-top:.5rem;font-family:'Instrument Serif',serif;font-size:.85rem;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${filmName || item.title}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--gold-l);margin-top:.15rem;">${rating || ''}</div>
+      `;
+      strip.appendChild(card);
+    });
+  }).catch(() => {
+    document.getElementById('film-strip').innerHTML =
+      '<p style="font-family:\'JetBrains Mono\',monospace;font-size:.6rem;color:var(--faint);">Couldn\'t load recent films right now.</p>';
+  });
 })();
 </script>
 </body>
