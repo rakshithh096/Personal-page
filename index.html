@@ -668,6 +668,8 @@ const tr=document.getElementById('ticker');
       let l = line.trim();
       if(!l){ if(inList){html+='</ul>';inList=false;} return; }
       l = l.replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--gold-l);font-weight:500;">$1</strong>');
+      l = l.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--gold-l);text-decoration:underline;">$1</a>');
+l = l.replace(/(https?:\/\/[^\s"<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--gold-l);text-decoration:underline;">$1</a>');
       if(l.startsWith('## ')){
         if(inList){html+='</ul>';inList=false;}
         html += `<h3 style="font-family:'Instrument Serif',serif;font-size:1.35em;color:var(--gold-l);font-weight:400;margin:1.3em 0 .5em;">${l.slice(3)}</h3>`;
