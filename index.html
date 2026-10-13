@@ -615,38 +615,66 @@ const tr=document.getElementById('ticker');
 </script>
 <script>
 (function(){
-  const LB_USER = 'soapnspices'; // ← your Letterboxd username
+  const LB_USER = 'soapnspices';
   const RSS_URL = 'https://letterboxd.com/' + LB_USER + '/rss/';
-  const PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL);
 
-  function loadFilms(){
-    fetch(PROXY).then(r => r.json()).then(data => {
-      const strip = document.getElementById('film-strip');
-      strip.innerHTML = '';
-      if (!data.items || !data.items.length) {
+  function parseXml(txt){
+    const xml = new DOMParser().parseFromString(txt, 'text/xml');
+    return Array.from(xml.querySelectorAll('item')).map(it => ({
+      title: (it.querySelector('title') || {}).textContent || '',
+      link: (it.querySelector('link') || {}).textContent || '',
+      desc: (it.querySelector('description') || {}).textContent || ''
+    }));
+  }
+
+  const SOURCES = [
+    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL))
+      .then(r => r.json())
+      .then(d => (d.items || []).map(i => ({title:i.title, link:i.link, desc:i.description}))),
+    () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(RSS_URL))
+      .then(r => r.text()).then(parseXml),
+    () => fetch('https://corsproxy.io/?' + encodeURIComponent(RSS_URL))
+      .then(r => r.text()).then(parseXml)
+  ];
+
+  async function getItems(){
+    for (const src of SOURCES){
+      try {
+        const items = await src();
+        if (items && items.length) return items;
+      } catch(e) {}
+    }
+    return [];
+  }
+
+  async function loadFilms(){
+    const strip = document.getElementById('film-strip');
+    const items = await getItems();
+
+    if (!items.length){
+      if (!strip.querySelector('a')){
         strip.innerHTML = '<p style="font-family:\'JetBrains Mono\',monospace;font-size:.6rem;color:var(--faint);">No recent films found.</p>';
-        return;
       }
-      data.items.slice(0, 10).forEach(item => {
-        const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
-        const poster = imgMatch ? imgMatch[1] : '';
-        const [filmName, rating] = item.title.split(' - ');
+      return;
+    }
 
-        const card = document.createElement('a');
-        card.href = item.link; card.target = '_blank'; card.rel = 'noopener';
-        card.style.cssText = 'flex:0 0 auto;width:140px;text-decoration:none;scroll-snap-align:start;';
-        card.innerHTML = `
-          <div style="width:140px;height:207px;border-radius:6px;overflow:hidden;border:1px solid var(--border2);background:var(--navy3);">
-            ${poster ? `<img src="${poster}" alt="${filmName}" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
-          </div>
-          <div style="margin-top:.5rem;font-family:'Instrument Serif',serif;font-size:.9rem;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${filmName || item.title}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold-l);margin-top:.15rem;">${rating || ''}</div>
-        `;
-        strip.appendChild(card);
-      });
-    }).catch(() => {
-      document.getElementById('film-strip').innerHTML =
-        '<p style="font-family:\'JetBrains Mono\',monospace;font-size:.6rem;color:var(--faint);">Couldn\'t load recent films right now.</p>';
+    strip.innerHTML = '';
+    items.slice(0, 10).forEach(item => {
+      const imgMatch = item.desc.match(/<img[^>]+src="([^">]+)"/);
+      const poster = imgMatch ? imgMatch[1] : '';
+      const [filmName, rating] = item.title.split(' - ');
+
+      const card = document.createElement('a');
+      card.href = item.link; card.target = '_blank'; card.rel = 'noopener';
+      card.style.cssText = 'flex:0 0 auto;width:140px;text-decoration:none;scroll-snap-align:start;';
+      card.innerHTML = `
+        <div style="width:140px;height:207px;border-radius:6px;overflow:hidden;border:1px solid var(--border2);background:var(--navy3);">
+          ${poster ? `<img src="${poster}" alt="${filmName}" style="width:100%;height:100%;object-fit:cover;display:block;">` : ''}
+        </div>
+        <div style="margin-top:.5rem;font-family:'Instrument Serif',serif;font-size:.9rem;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${filmName || item.title}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold-l);margin-top:.15rem;">${rating || ''}</div>
+      `;
+      strip.appendChild(card);
     });
   }
 
