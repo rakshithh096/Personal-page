@@ -628,6 +628,7 @@ const tr=document.getElementById('ticker');
   }
 
   const SOURCES = [
+    () => fetch('/api/letterboxd').then(r => r.text()).then(parseXml),
     () => fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL))
       .then(r => r.json())
       .then(d => (d.items || []).map(i => ({title:i.title, link:i.link, desc:i.description}))),
